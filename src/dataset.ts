@@ -118,9 +118,8 @@ export class HdtDatasetCore implements HdtDataset {
 
   get size(): number {
     if (this._size === null) {
-      // Query all triples to get count
-      const allTriples = this.wasm.queryTriples(null, null, null);
-      this._size = allTriples.length;
+      // Use efficient count function instead of loading all triples
+      this._size = this.wasm.countTriples(null, null, null);
     }
     return this._size;
   }
@@ -204,6 +203,20 @@ export class HdtDatasetCore implements HdtDataset {
   close(): void {
     // Future: could implement explicit HDT instance cleanup
     this._size = null;
+  }
+
+  /**
+   * Count triples matching a pattern (efficient, doesn't load into memory)
+   */
+  countMatches(
+    subject?: RDF.Quad_Subject | null,
+    predicate?: RDF.Quad_Predicate | null,
+    object?: RDF.Quad_Object | null
+  ): number {
+    const s = subject?.value || null;
+    const p = predicate?.value || null;
+    const o = object?.value || null;
+    return this.wasm.countTriples(s, p, o);
   }
 }
 

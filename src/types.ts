@@ -50,6 +50,14 @@ export interface HdtWasmExports {
     outputPtr: bigint,
     outputCapacity: bigint
   ) => number;
+  hdt_count_triples: (
+    subjectPtr: bigint,
+    subjectLen: bigint,
+    predicatePtr: bigint,
+    predicateLen: bigint,
+    objectPtr: bigint,
+    objectLen: bigint
+  ) => bigint;
   hdt_size_in_bytes: () => number;
   hdt_get_last_error?: (outputPtr: bigint, outputCapacity: bigint) => number;
   hdt_init_logging?: () => number;
@@ -66,16 +74,6 @@ export interface HdtLoadOptions {
    * If not provided, loads from the bundled hdt.wasm
    */
   wasmSource?: string | Uint8Array;
-
-  /**
-   * Initial WASM memory pages (default: 256)
-   */
-  initialMemory?: number;
-
-  /**
-   * Maximum WASM memory pages (default: 32768)
-   */
-  maxMemory?: number;
 }
 
 /**

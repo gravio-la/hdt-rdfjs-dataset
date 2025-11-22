@@ -17,7 +17,7 @@ export class HdtWasm {
    * Load and initialize the WASM module
    */
   async load(options: HdtLoadOptions = {}): Promise<void> {
-    const { wasmSource, initialMemory = 256, maxMemory = 32768 } = options;
+    const { wasmSource } = options;
 
     // Load WASM bytes
     let wasmBytes: Uint8Array;
@@ -41,24 +41,17 @@ export class HdtWasm {
     }
 
     // Compile WASM
-    const module = await WebAssembly.compile(wasmBytes);
+    const module = await WebAssembly.compile(wasmBytes as BufferSource);
 
-    // Create memory with i64 index support (WASM64)
-    this.memory = new WebAssembly.Memory({
-      initial: initialMemory,
-      maximum: maxMemory,
-      // @ts-ignore - index property is not in TS types yet but required for WASM64
-      index: 'i64',
-    });
-
-    // Instantiate WASM
+    // Instantiate WASM (it exports its own memory, don't create one)
     const instance = await WebAssembly.instantiate(module, {
-      env: {
-        memory: this.memory,
-      },
+      env: {}
     });
 
-    this.exports = instance.exports as HdtWasmExports;
+    this.exports = instance.exports as unknown as HdtWasmExports;
+    
+    // Use the memory exported by WASM
+    this.memory = this.exports.memory;
 
     // Initialize Rust logger if available
     if (this.exports.hdt_init_logging) {
@@ -74,18 +67,37 @@ export class HdtWasm {
       throw new Error('WASM not loaded. Call load() first.');
     }
 
+    console.log('[WASM-LOADER] loadHdt called with data.length:', data.length);
+    console.log('[WASM-LOADER] First 20 bytes:', Array.from(data.slice(0, 20)).map(b => b.toString(16).padStart(2, '0')).join(' '));
+
     // Allocate memory
     const ptr = this.exports.hdt_alloc(BigInt(data.length));
     if (!ptr) {
       throw new Error('Failed to allocate memory');
     }
+    console.log('[WASM-LOADER] Allocated at ptr:', ptr);
 
     // Copy data to WASM memory
     const memoryView = new Uint8Array(this.memory.buffer);
+    console.log('[WASM-LOADER] Memory buffer size:', this.memory.buffer.byteLength);
+    console.log('[WASM-LOADER] Copying to offset:', Number(ptr));
     memoryView.set(data, Number(ptr));
+    
+    // Verify copy
+    const verifyBytes = memoryView.slice(Number(ptr), Number(ptr) + 20);
+    console.log('[WASM-LOADER] Verified first 20 bytes in WASM memory:', Array.from(verifyBytes).map(b => b.toString(16).padStart(2, '0')).join(' '));
 
     // Call load function
     const result = this.exports.hdt_load(ptr, BigInt(data.length));
+    console.log('[WASM-LOADER] hdt_load returned:', result);
+
+    // Get Rust debug log
+    if (this.exports.hdt_get_debug_log) {
+      const debugLog = this.getRustDebugLog();
+      if (debugLog) {
+        console.log('[WASM-LOADER] Rust debug log:', debugLog);
+      }
+    }
 
     // Free input buffer
     this.exports.hdt_free(ptr, BigInt(data.length));
@@ -94,6 +106,23 @@ export class HdtWasm {
       const errorMsg = this.getLastError();
       throw new Error(`Failed to load HDT: ${errorMsg || `Error code ${result}`}`);
     }
+  }
+  
+  private getRustDebugLog(): string {
+    if (!this.exports || !this.exports.hdt_get_debug_log || !this.memory) {
+      return '';
+    }
+    const logBufferCapacity = 4096;
+    const logPtr = this.exports.hdt_alloc(BigInt(logBufferCapacity));
+    const logLen = this.exports.hdt_get_debug_log(logPtr, BigInt(logBufferCapacity));
+
+    let logMsg = '';
+    if (logLen > 0) {
+      const logBytes = new Uint8Array(this.memory.buffer, Number(logPtr), Number(logLen));
+      logMsg = this.textDecoder.decode(logBytes);
+    }
+    this.exports.hdt_free(logPtr, BigInt(logBufferCapacity));
+    return logMsg;
   }
 
   /**
@@ -168,7 +197,55 @@ export class HdtWasm {
     if (!this.exports) {
       throw new Error('WASM not loaded');
     }
-    return this.exports.hdt_size_in_bytes();
+    const size = this.exports.hdt_size_in_bytes();
+    // Convert to number (in case it's BigInt in WASM64)
+    return typeof size === 'bigint' ? Number(size) : size;
+  }
+
+  /**
+   * Count triples matching a pattern (efficient, doesn't load into memory)
+   */
+  countTriples(
+    subject?: string | null,
+    predicate?: string | null,
+    object?: string | null
+  ): number {
+    if (!this.exports || !this.memory) {
+      throw new Error('WASM not loaded');
+    }
+
+    // Prepare input strings
+    const subjectBytes = subject ? this.textEncoder.encode(subject) : new Uint8Array(0);
+    const predicateBytes = predicate ? this.textEncoder.encode(predicate) : new Uint8Array(0);
+    const objectBytes = object ? this.textEncoder.encode(object) : new Uint8Array(0);
+
+    // Allocate memory for inputs
+    const subjectPtr = subject ? this.exports.hdt_alloc(BigInt(subjectBytes.length)) : 0n;
+    const predicatePtr = predicate ? this.exports.hdt_alloc(BigInt(predicateBytes.length)) : 0n;
+    const objectPtr = object ? this.exports.hdt_alloc(BigInt(objectBytes.length)) : 0n;
+
+    // Copy input strings to WASM memory
+    const memoryView = new Uint8Array(this.memory.buffer);
+    if (subject) memoryView.set(subjectBytes, Number(subjectPtr));
+    if (predicate) memoryView.set(predicateBytes, Number(predicatePtr));
+    if (object) memoryView.set(objectBytes, Number(objectPtr));
+
+    // Call count function
+    const count = this.exports.hdt_count_triples(
+      subjectPtr,
+      BigInt(subjectBytes.length),
+      predicatePtr,
+      BigInt(predicateBytes.length),
+      objectPtr,
+      BigInt(objectBytes.length)
+    );
+
+    // Free input buffers
+    if (subject) this.exports.hdt_free(subjectPtr, BigInt(subjectBytes.length));
+    if (predicate) this.exports.hdt_free(predicatePtr, BigInt(predicateBytes.length));
+    if (object) this.exports.hdt_free(objectPtr, BigInt(objectBytes.length));
+
+    return Number(count);
   }
 
   /**
