@@ -96,6 +96,15 @@ export interface HdtDataset extends RDF.DatasetCore {
   sizeInBytes(): number;
 
   /**
+   * Count triples matching a pattern (efficient, doesn't load into memory)
+   */
+  countMatches(
+    subject?: RDF.Quad_Subject | null,
+    predicate?: RDF.Quad_Predicate | null,
+    object?: RDF.Quad_Object | null
+  ): number;
+
+  /**
    * Close and cleanup the HDT instance
    */
   close(): void;
