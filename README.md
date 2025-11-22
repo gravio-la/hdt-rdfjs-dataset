@@ -248,17 +248,20 @@ This library is built on [hdt-rs](https://github.com/KonradHoeffner/hdt), a Rust
 Use the `rdf2hdt` tool to convert RDF data to HDT format. You can install it via Nix:
 
 - [**hdt** package](https://search.nixos.org/packages?channel=unstable&query=hdt) - HDT-CPP tools including `rdf2hdt`
-- [**librdf_raptor2** package](https://search.nixos.org/packages?channel=unstable&query=librdf_raptor2) - RDF parsers for additional format support
+- [**librdf_raptor2** package](https://search.nixos.org/packages?channel=unstable&query=librdf_raptor2) - RDF parsers (includes `rapper`)
 
 ```bash
-# With Nix - N-Triples to HDT
+# N-Triples to HDT (direct conversion)
 nix-shell -p hdt --run "rdf2hdt data.nt data.hdt"
 
-# With additional parsers for Turtle, RDF/XML, etc.
-nix-shell -p hdt librdf_raptor2 --run "rdf2hdt data.ttl data.hdt"
+# Turtle to HDT (convert with rapper first)
+nix-shell -p hdt librdf_raptor2 --run "rapper -i turtle data.ttl | rdf2hdt - data.hdt"
+
+# RDF/XML to HDT
+nix-shell -p hdt librdf_raptor2 --run "rapper -i rdfxml data.rdf | rdf2hdt - data.hdt"
 ```
 
-Supported input formats: N-Triples, Turtle, RDF/XML, and more.
+`rdf2hdt` accepts N-Triples directly. For other formats (Turtle, RDF/XML), use `rapper` to convert to N-Triples first.
 
 ## Examples
 
