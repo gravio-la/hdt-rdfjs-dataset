@@ -1,0 +1,73 @@
+{
+  "name": "@graviola/hdt-rdfjs-dataset",
+  "version": "0.1.0",
+  "description": "RDF/JS DatasetCore implementation backed by HDT (Header Dictionary Triples) with WASM64 for high-performance, compressed RDF storage in the browser",
+  "keywords": [
+    "rdf",
+    "rdfjs",
+    "dataset",
+    "hdt",
+    "wasm",
+    "wasm64",
+    "semantic-web",
+    "linked-data",
+    "graph",
+    "clownface"
+  ],
+  "author": "Winzlieb <winzlieb@c3d2.de>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gravio-la/hdt-rdfjs-dataset.git"
+  },
+  "homepage": "https://github.com/gravio-la/hdt-rdfjs-dataset#readme",
+  "bugs": {
+    "url": "https://github.com/gravio-la/hdt-rdfjs-dataset/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./hdt.wasm": "./dist/hdt.wasm"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "bun run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rdfjs/data-model": "^2.1.1"
+  },
+  "peerDependencies": {
+    "@rdfjs/types": "^2.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@rdfjs/types": "^2.0.1",
+    "@types/node": "^20.10.0",
+    "rollup": "^4.9.0",
+    "rollup-plugin-copy": "^3.5.0",
+    "tslib": "^2.6.2",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
+

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@graviola/hdt-rdfjs-dataset Example</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>@graviola/hdt-rdfjs-dataset Example</h1>
+    <div id="status">Loading...</div>
+    <pre id="output"></pre>
+
+    <script type="module">
+        // Import from the built package
+        import { loadHdtDatasetFromUrl } from './dist/index.js';
+
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+
+        function log(msg) {
+            output.textContent += msg + '\n';
+        }
+
+        async function example() {
+            try {
+                log('Loading HDT dataset from URL...\n');
+                
+                // Load from the demo HDT file
+                const dataset = await loadHdtDatasetFromUrl('../../hdt-js-demo/public/snikmeta.hdt');
+                
+                log(`✓ Dataset loaded successfully!`);
+                log(`  Size: ${dataset.size} triples`);
+                log(`  Memory: ${Math.round(dataset.sizeInBytes() / 1024)} KB\n`);
+                
+                log('=== Iterating over all triples ===\n');
+                let count = 0;
+                for (const quad of dataset) {
+                    log(`${quad.subject.value} ${quad.predicate.value} ${quad.object.value}`);
+                    count++;
+                    if (count >= 10) {
+                        log(`... and ${dataset.size - 10} more\n`);
+                        break;
+                    }
+                }
+                
+                log('=== Pattern matching ===\n');
+                
+                // Simple match
+                const matches = dataset.match(
+                    { value: 'http://www.snik.eu/ontology/meta/Top' },
+                    { value: 'http://www.w3.org/2000/01/rdf-schema#label' },
+                    null
+                );
+                
+                log(`Found ${matches.size} match(es):\n`);
+                for (const quad of matches) {
+                    log(`  ${quad.subject.value}`);
+                    log(`    -> ${quad.object.value}\n`);
+                }
+                
+                log('=== Using raw query API ===\n');
+                const rawResults = dataset.queryRaw(
+                    'http://www.snik.eu/ontology/meta/Top',
+                    null,
+                    null
+                );
+                
+                log(`Raw query returned ${rawResults.length} results:\n`);
+                for (const triple of rawResults.slice(0, 5)) {
+                    log(`  Subject: ${triple.subject.value} (${triple.subject.termType})`);
+                    log(`  Predicate: ${triple.predicate.value}`);
+                    log(`  Object: ${triple.object.value} (${triple.object.termType})`);
+                    if (triple.object.language) {
+                        log(`    Language: ${triple.object.language}`);
+                    }
+                    log('');
+                }
+                
+                status.textContent = '✓ Example completed successfully!';
+                status.className = 'success';
+                
+            } catch (error) {
+                log(`\n❌ Error: ${error.message}`);
+                log(error.stack);
+                status.textContent = '❌ Example failed';
+                status.className = 'error';
+            }
+        }
+
+        example();
+    </script>
+</body>
+</html>
+
