@@ -5,6 +5,8 @@
 [![npm version](https://img.shields.io/npm/v/@graviola/hdt-rdfjs-dataset.svg)](https://www.npmjs.com/package/@graviola/hdt-rdfjs-dataset)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+🚀 **[Try the live demo](https://gravio-la.github.io/hdt-graph-discovery-demo/)** - Interactive HDT graph browser
+
 ## Features
 
 ✅ **RDF/JS Compatible** - Full DatasetCore interface implementation  
@@ -113,6 +115,27 @@ const hdtBytes = new Uint8Array(await response.arrayBuffer());
 const dataset = await loadHdtDataset(hdtBytes);
 ```
 
+### Advanced: Efficient Counting
+
+Count matching triples without loading them into memory:
+
+```typescript
+// Count all triples
+const totalTriples = dataset.countMatches(null, null, null);
+
+// Count triples with specific predicate
+const labelCount = dataset.countMatches(null, rdfs.label, null);
+
+// Count instances of a class
+const instanceCount = dataset.countMatches(
+  null,
+  rdfType,
+  factory.namedNode('http://example.org/Person')
+);
+
+console.log(`Found ${instanceCount} instances`);
+```
+
 ### Advanced: Raw Query API
 
 For maximum performance, bypass RDF/JS term conversion:
@@ -161,8 +184,6 @@ Load an HDT dataset from a URL.
 ```typescript
 interface HdtLoadOptions {
   wasmSource?: string | Uint8Array; // Custom WASM binary
-  initialMemory?: number;            // Initial memory pages (default: 256)
-  maxMemory?: number;                // Max memory pages (default: 32768)
 }
 ```
 
@@ -182,6 +203,7 @@ interface HdtDataset extends RDF.DatasetCore {
   
   // HDT-specific extensions
   queryRaw(s?: string, p?: string, o?: string): StructuredTriple[];
+  countMatches(s?, p?, o?): number; // Efficient counting without loading triples
   sizeInBytes(): number;
   close(): void;
 }
@@ -221,36 +243,22 @@ This library is built on [hdt-rs](https://github.com/KonradHoeffner/hdt), a Rust
 3. **Browser-Only**: Requires WASM64 support
    - Node.js support pending WASM64 implementation
 
-## Package Structure
-
-```
-@graviola/hdt-rdfjs-dataset/
-├── wasm/
-│   └── hdt.wasm          # Prebuilt WASM binary (version controlled)
-├── dist/                  # Built output (generated, not in git)
-│   ├── index.js          # ESM bundle
-│   ├── index.cjs         # CommonJS bundle
-│   ├── *.d.ts            # TypeScript declarations
-│   └── hdt.wasm          # Copied from wasm/ during build
-└── src/                   # TypeScript source
-```
-
-The prebuilt WASM binary in `wasm/` is version controlled for easy publishing. In the future, WASM compilation will be integrated into the build pipeline.
-
 ## Creating HDT Files
 
-Use the [HDT-it tool](https://github.com/rdfhdt/hdt-it) or [HDT-CPP](https://github.com/rdfhdt/hdt-cpp):
+Use the `rdf2hdt` tool to convert RDF data to HDT format. You can install it via Nix:
+
+- [**hdt** package](https://search.nixos.org/packages?channel=unstable&query=hdt) - HDT-CPP tools including `rdf2hdt`
+- [**librdf_raptor2** package](https://search.nixos.org/packages?channel=unstable&query=librdf_raptor2) - RDF parsers for additional format support
 
 ```bash
-# Install hdt-cpp
-sudo apt-get install hdt-cpp
+# With Nix - N-Triples to HDT
+nix-shell -p hdt --run "rdf2hdt data.nt data.hdt"
 
-# Convert N-Triples to HDT
-rdf2hdt data.nt data.hdt
-
-# Or from Turtle
-rapper -i turtle data.ttl | rdf2hdt - data.hdt
+# With additional parsers for Turtle, RDF/XML, etc.
+nix-shell -p hdt librdf_raptor2 --run "rdf2hdt data.ttl data.hdt"
 ```
+
+Supported input formats: N-Triples, Turtle, RDF/XML, and more.
 
 ## Examples
 
