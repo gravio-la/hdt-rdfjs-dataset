@@ -1,19 +1,17 @@
 # @graviola/hdt-rdfjs-dataset
 
-> RDF/JS DatasetCore implementation backed by HDT (Header Dictionary Triples) with WASM64 for high-performance, compressed RDF storage in the browser.
+> RDF/JS DatasetCore implementation backed by [HDT (Header Dictionary Triples)](https://www.w3.org/submissions/HDT/) with WASM64 for high-performance, compressed RDF storage in the browser.
 
 [![npm version](https://img.shields.io/npm/v/@graviola/hdt-rdfjs-dataset.svg)](https://www.npmjs.com/package/@graviola/hdt-rdfjs-dataset)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-🚀 **[Try the live demo](https://gravio-la.github.io/hdt-graph-discovery-demo/)** - Interactive HDT graph browser
+🚀 **[Try the live demo](https://gravio-la.github.io/hdt-graph-discovery-demo/)** - Interactive HDT backed RDF graph browser
 
 ## Features
 
-✅ **RDF/JS Compatible** - Full DatasetCore interface implementation  
+✅ **RDF/JS Compatible** - Partial [DatasetCore interface](https://rdf.js.org/dataset-spec/) implementation (read-only)  
 ✅ **Compressed Storage** - Built on [hdt-rs](https://github.com/KonradHoeffner/hdt) for efficient RDF compression  
-✅ **Zero Regex Parsing** - Structured term data directly from Rust  
 ✅ **Browser-Native** - WASM64 compiled from Rust  
-✅ **Clownface Ready** - Works seamlessly with Clownface graph traversal  
 ✅ **Type-Safe** - Full TypeScript definitions included  
 ✅ **Lightweight** - Minimal dependencies, tree-shakeable
 
@@ -223,13 +221,6 @@ Requires WASM64 support:
 
 This library is built on [hdt-rs](https://github.com/KonradHoeffner/hdt), a Rust implementation of the HDT format, compiled to WASM64 for browser use.
 
-### Key Benefits
-
-- **Compression**: HDT files are typically 10-15x smaller than N-Triples
-- **Indexed Queries**: Pattern queries use HDT's built-in indices for fast lookups
-- **Memory Efficient**: No full decompression needed - queries operate directly on compressed data
-- **Zero Regex**: Term parsing happens in Rust, returning structured data to JavaScript
-
 ## Limitations
 
 1. **Read-Only**: HDT doesn't support mutations
@@ -251,14 +242,20 @@ Use the `rdf2hdt` tool to convert RDF data to HDT format. You can install it via
 - [**librdf_raptor2** package](https://search.nixos.org/packages?channel=unstable&query=librdf_raptor2) - RDF parsers (includes `rapper`)
 
 ```bash
+nix-shell -p hdt librdf_raptor2
+
+# Inside the nix-shell:
+
 # N-Triples to HDT (direct conversion)
-nix-shell -p hdt --run "rdf2hdt data.nt data.hdt"
+rdf2hdt data.nt data.hdt
 
 # Turtle to HDT (convert with rapper first)
-nix-shell -p hdt librdf_raptor2 --run "rapper -i turtle data.ttl | rdf2hdt - data.hdt"
+rapper -i turtle data.ttl | rdf2hdt - data.hdt
 
 # RDF/XML to HDT
-nix-shell -p hdt librdf_raptor2 --run "rapper -i rdfxml data.rdf | rdf2hdt - data.hdt"
+rapper -i rdfxml data.rdf | rdf2hdt - data.hdt
+```
+# End of Selection
 ```
 
 `rdf2hdt` accepts N-Triples directly. For other formats (Turtle, RDF/XML), use `rapper` to convert to N-Triples first.

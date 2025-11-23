@@ -11,8 +11,7 @@
     "wasm64",
     "semantic-web",
     "linked-data",
-    "graph",
-    "clownface"
+    "graph"
   ],
   "author": "Winzlieb <winzlieb@c3d2.de>",
   "license": "MIT",
@@ -61,9 +60,6 @@
     "rollup-plugin-copy": "^3.5.0",
     "tslib": "^2.6.2",
     "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public",
