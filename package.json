@@ -1,6 +1,6 @@
 {
   "name": "@graviola/hdt-rdfjs-dataset",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "RDF/JS DatasetCore implementation backed by HDT (Header Dictionary Triples) with WASM64 for high-performance, compressed RDF storage in the browser",
   "keywords": [
     "rdf",
