@@ -76,31 +76,6 @@ for (const quad of matches) {
 }
 ```
 
-### With Clownface
-
-```typescript
-import clownface from 'clownface';
-import factory from '@rdfjs/data-model';
-
-// Create Clownface instance
-const cf = clownface({ dataset });
-
-// Fluent graph navigation
-const person = cf.node(factory.namedNode('http://example.org/alice'));
-
-// Get all labels
-const labels = person.out(rdfs.label).values;
-
-// Traverse relationships
-const friends = person.out(foaf.knows);
-for (const friend of friends.values) {
-  const friendName = cf.node(factory.namedNode(friend))
-    .out(foaf.name)
-    .value;
-  console.log(`Friend: ${friendName}`);
-}
-```
-
 ### Loading from Bytes
 
 ```typescript
@@ -255,8 +230,6 @@ rapper -i turtle data.ttl | rdf2hdt - data.hdt
 # RDF/XML to HDT
 rapper -i rdfxml data.rdf | rdf2hdt - data.hdt
 ```
-# End of Selection
-```
 
 `rdf2hdt` accepts N-Triples directly. For other formats (Turtle, RDF/XML), use `rapper` to convert to N-Triples first.
 
@@ -267,15 +240,11 @@ rapper -i rdfxml data.rdf | rdf2hdt - data.hdt
 ```typescript
 import { loadHdtDatasetFromUrl } from '@graviola/hdt-rdfjs-dataset';
 import clownface from 'clownface';
+import { rdfs } from "@tpluscode/rdf-ns-builders";
 import factory from '@rdfjs/data-model';
 
 const dataset = await loadHdtDatasetFromUrl('/ontology.hdt');
 const cf = clownface({ dataset });
-
-const rdfs = {
-  label: factory.namedNode('http://www.w3.org/2000/01/rdf-schema#label'),
-  subClassOf: factory.namedNode('http://www.w3.org/2000/01/rdf-schema#subClassOf'),
-};
 
 // Find all classes with labels
 const classes = cf.has(rdfs.label);
@@ -287,28 +256,6 @@ for (const classIri of classes.values) {
   
   console.log(`Class: ${label}`);
   console.log(`Superclasses: ${superClasses.join(', ')}`);
-}
-```
-
-### React Hook
-
-```typescript
-import { loadHdtDatasetFromUrl } from '@graviola/hdt-rdfjs-dataset';
-import { useState, useEffect } from 'react';
-
-export function useHdtDataset(url: string) {
-  const [dataset, setDataset] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    loadHdtDatasetFromUrl(url)
-      .then(setDataset)
-      .catch(setError)
-      .finally(() => setLoading(false));
-  }, [url]);
-
-  return { dataset, loading, error };
 }
 ```
 
