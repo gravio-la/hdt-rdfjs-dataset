@@ -275,6 +275,4 @@ MIT © Graviola Team
 
 ## Acknowledgments
 
-This library is built on [hdt-rs](https://github.com/KonradHoeffner/hdt) by Konrad Höffner, a pure Rust implementation of the HDT format. We've compiled it to WASM64 and wrapped it with a TypeScript RDF/JS DatasetCore interface to make HDT accessible in modern JavaScript applications.
-
-
+This library is built on [hdt-rs](https://github.com/KonradHoeffner/hdt) by Konrad Höffner and Tim Baccaert, a pure Rust implementation of the HDT format. We've compiled it to WASM64 and wrapped it with a TypeScript RDF/JS DatasetCore interface to make HDT accessible in modern JavaScript applications.
